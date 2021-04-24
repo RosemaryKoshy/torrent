@@ -31,3 +31,5 @@ operates as expected following the formula "more challenge goals means your code
 case bugs".
 
 Due: May 10th by 2:30 PM
+
+Requires: The libtorrent C++ BitTorrent library including development files
