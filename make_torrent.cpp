@@ -1,17 +1,17 @@
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/storage.hpp"
-#include "libtorrent/create_torrent.hpp"
-
-#include <functional>
 #include <cstdio>
-#include <sstream>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <sstream>
+
+#include "libtorrent/bencode.hpp"
+#include "libtorrent/create_torrent.hpp"
+#include "libtorrent/entry.hpp"
+#include "libtorrent/storage.hpp"
+#include "libtorrent/torrent_info.hpp"
 
 #ifdef TORRENT_WINDOWS
-#include <direct.h> // for _getcwd
+#include <direct.h>  // for _getcwd
 #endif
 
 using namespace std::placeholders;
@@ -41,8 +41,7 @@ std::string branch_path(std::string const &f) {
     if (f[len - 1] == '/' || f[len - 1] == '\\') --len;
     while (len > 0) {
         --len;
-        if (f[len] == '/' || f[len] == '\\')
-            break;
+        if (f[len] == '/' || f[len] == '\\') break;
     }
 
     if (f[len] == '/' || f[len] == '\\') ++len;
@@ -57,14 +56,16 @@ bool file_filter(std::string const &f) {
     char const *first = f.c_str();
     char const *sep = strrchr(first, '/');
 #if defined(TORRENT_WINDOWS) || defined(TORRENT_OS2)
-    char const* altsep = strrchr(first, '\\');
-  if (sep == nullptr || altsep > sep) sep = altsep;
+    char const *altsep = strrchr(first, '\\');
+    if (sep == nullptr || altsep > sep) sep = altsep;
 #endif
     // if there is no parent path, just set 'sep'
     // to point to the filename.
     // if there is a parent path, skip the '/' character
-    if (sep == nullptr) sep = first;
-    else ++sep;
+    if (sep == nullptr)
+        sep = first;
+    else
+        ++sep;
 
     // return false if the first character of the filename is a .
     if (sep[0] == '.') return false;
@@ -141,8 +142,8 @@ int main(int argc_, char const *argv_[]) try {
     std::string merklefile;
 #ifdef TORRENT_WINDOWS
     // don't ever write binary data to the console on windows
-  // it will just be interpreted as text and corrupted
-  outfile = "a.torrent";
+    // it will just be interpreted as text and corrupted
+    outfile = "a.torrent";
 #endif
 
     std::string full_path = args[1];
@@ -270,23 +271,23 @@ int main(int argc_, char const *argv_[]) try {
     lt::create_torrent t(fs, piece_size, pad_file_limit, flags);
     int tier = 0;
     for (std::string const &tr : trackers) {
-        if (tr == "-") ++tier;
-        else t.add_tracker(tr, tier);
+        if (tr == "-")
+            ++tier;
+        else
+            t.add_tracker(tr, tier);
     }
 
-    for (std::string const &ws : web_seeds)
-        t.add_url_seed(ws);
+    for (std::string const &ws : web_seeds) t.add_url_seed(ws);
 
-    for (std::string const &c : collections)
-        t.add_collection(c);
+    for (std::string const &c : collections) t.add_collection(c);
 
-    for (lt::sha1_hash const &s : similar)
-        t.add_similar_torrent(s);
+    for (lt::sha1_hash const &s : similar) t.add_similar_torrent(s);
 
     auto const num = t.num_pieces();
-    lt::set_piece_hashes(t, branch_path(full_path), [num](lt::piece_index_t const p) {
-        std::cerr << "\r" << p << "/" << num;
-    });
+    lt::set_piece_hashes(t, branch_path(full_path),
+                         [num](lt::piece_index_t const p) {
+                             std::cerr << "\r" << p << "/" << num;
+                         });
 
     std::cerr << "\n";
     t.set_creator(creator_str.c_str());
@@ -314,13 +315,14 @@ int main(int argc_, char const *argv_[]) try {
     if (!merklefile.empty()) {
         std::fstream merkle;
         merkle.exceptions(std::ifstream::failbit);
-        merkle.open(merklefile.c_str(), std::ios_base::out | std::ios_base::binary);
+        merkle.open(merklefile.c_str(),
+                    std::ios_base::out | std::ios_base::binary);
         auto const &tree = t.merkle_tree();
-        merkle.write(reinterpret_cast<char const *>(tree.data()), tree.size() * 20);
+        merkle.write(reinterpret_cast<char const *>(tree.data()),
+                     tree.size() * 20);
     }
     return 0;
-}
-catch (std::exception &e) {
+} catch (std::exception &e) {
     std::cerr << "ERROR: " << e.what() << "\n";
     return 1;
 }

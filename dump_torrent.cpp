@@ -1,15 +1,14 @@
-#include <cstdio> // for snprintf
-#include <cinttypes> // for PRId64 et.al.
-
-#include "libtorrent/entry.hpp"
-#include "libtorrent/bencode.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/announce_entry.hpp"
-#include "libtorrent/bdecode.hpp"
-#include "libtorrent/magnet_uri.hpp"
-
+#include <cinttypes>  // for PRId64 et.al.
+#include <cstdio>     // for snprintf
 #include <fstream>
 #include <iostream>
+
+#include "libtorrent/announce_entry.hpp"
+#include "libtorrent/bdecode.hpp"
+#include "libtorrent/bencode.hpp"
+#include "libtorrent/entry.hpp"
+#include "libtorrent/magnet_uri.hpp"
+#include "libtorrent/torrent_info.hpp"
 
 std::vector<char> load_file(std::string const &filename) {
     std::fstream in;
@@ -25,7 +24,8 @@ std::vector<char> load_file(std::string const &filename) {
 
 int main(int argc, char *argv[]) try {
     if (argc < 2 || argc > 5) {
-        std::cerr << "usage: dump_torrent torrent-file [total-items-limit] [recursion-limit] [piece-count-limit]\n";
+        std::cerr << "usage: dump_torrent torrent-file [total-items-limit] "
+                     "[recursion-limit] [piece-count-limit]\n";
         return 1;
     }
 
@@ -40,12 +40,14 @@ int main(int argc, char *argv[]) try {
     lt::error_code ec;
     std::cout << "decoding. recursion limit: " << cfg.max_decode_depth
               << " total item count limit: " << cfg.max_decode_tokens << "\n";
-    lt::bdecode_node const e = lt::bdecode(buf, ec, &pos, cfg.max_decode_depth, cfg.max_decode_tokens);
+    lt::bdecode_node const e =
+            lt::bdecode(buf, ec, &pos, cfg.max_decode_depth, cfg.max_decode_tokens);
 
     std::printf("\n\n----- raw info -----\n\n%s\n", print_entry(e).c_str());
 
     if (ec) {
-        std::cerr << "failed to decode: '" << ec.message() << "' at character: " << pos << "\n";
+        std::cerr << "failed to decode: '" << ec.message()
+                  << "' at character: " << pos << "\n";
         return 1;
     }
 
@@ -63,40 +65,54 @@ int main(int argc, char *argv[]) try {
 
     std::stringstream ih;
     ih << t.info_hash();
-    std::printf("number of pieces: %d\n"
-                "piece length: %d\n"
-                "info hash: %s\n"
-                "comment: %s\n"
-                "created by: %s\n"
-                "magnet link: %s\n"
-                "name: %s\n"
-                "number of files: %d\n"
-                "files:\n", t.num_pieces(), t.piece_length(), ih.str().c_str(), t.comment().c_str(),
-                t.creator().c_str(), make_magnet_uri(t).c_str(), t.name().c_str(), t.num_files());
+    std::printf(
+            "number of pieces: %d\n"
+            "piece length: %d\n"
+            "info hash: %s\n"
+            "comment: %s\n"
+            "created by: %s\n"
+            "magnet link: %s\n"
+            "name: %s\n"
+            "number of files: %d\n"
+            "files:\n",
+            t.num_pieces(), t.piece_length(), ih.str().c_str(), t.comment().c_str(),
+            t.creator().c_str(), make_magnet_uri(t).c_str(), t.name().c_str(),
+            t.num_files());
     lt::file_storage const &st = t.files();
     for (auto const i : st.file_range()) {
         auto const first = st.map_file(i, 0, 0).piece;
-        auto const last = st.map_file(i, std::max(std::int64_t(st.file_size(i)) - 1, std::int64_t(0)), 0).piece;
+        auto const last =
+                st.map_file(
+                                i,
+                                std::max(std::int64_t(st.file_size(i)) - 1, std::int64_t(0)),
+                                0)
+                        .piece;
         auto const flags = st.file_flags(i);
         std::stringstream file_hash;
-        if (!st.hash(i).is_all_zeros())
-            file_hash << st.hash(i);
-        std::printf(" %8" PRIx64 " %11" PRId64 " %c%c%c%c [ %5d, %5d ] %7u %s %s %s%s\n", st.file_offset(i),
-                    st.file_size(i), ((flags & lt::file_storage::flag_pad_file) ? 'p' : '-'),
+        if (!st.hash(i).is_all_zeros()) file_hash << st.hash(i);
+        std::printf(" %8" PRIx64 " %11" PRId64
+                    " %c%c%c%c [ %5d, %5d ] %7u %s %s %s%s\n",
+                    st.file_offset(i), st.file_size(i),
+                    ((flags & lt::file_storage::flag_pad_file) ? 'p' : '-'),
                     ((flags & lt::file_storage::flag_executable) ? 'x' : '-'),
                     ((flags & lt::file_storage::flag_hidden) ? 'h' : '-'),
-                    ((flags & lt::file_storage::flag_symlink) ? 'l' : '-'), static_cast<int>(first),
-                    static_cast<int>(last), std::uint32_t(st.mtime(i)), file_hash.str().c_str(),
-                    st.file_path(i).c_str(), (flags & lt::file_storage::flag_symlink) ? "-> " : "",
-                    (flags & lt::file_storage::flag_symlink) ? st.symlink(i).c_str() : "");
+                    ((flags & lt::file_storage::flag_symlink) ? 'l' : '-'),
+                    static_cast<int>(first), static_cast<int>(last),
+                    std::uint32_t(st.mtime(i)), file_hash.str().c_str(),
+                    st.file_path(i).c_str(),
+                    (flags & lt::file_storage::flag_symlink) ? "-> " : "",
+                    (flags & lt::file_storage::flag_symlink)
+                    ? st.symlink(i).c_str()
+                    : "");
     }
     std::printf("web seeds:\n");
     for (auto const &ws : t.web_seeds()) {
-        std::printf("%s %s\n", ws.type == lt::web_seed_entry::url_seed ? "BEP19" : "BEP17", ws.url.c_str());
+        std::printf("%s %s\n",
+                    ws.type == lt::web_seed_entry::url_seed ? "BEP19" : "BEP17",
+                    ws.url.c_str());
     }
 
     return 0;
-}
-catch (std::exception const &e) {
+} catch (std::exception const &e) {
     std::cerr << "ERROR: " << e.what() << "\n";
 }
