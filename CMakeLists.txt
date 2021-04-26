@@ -7,3 +7,4 @@ add_executable(simple_client simple_client.cpp)
 add_executable(dump_torrent dump_torrent.cpp)
 add_executable(make_torrent make_torrent.cpp)
 
+target_link_libraries(simple_client boost_system pthread boost_thread torrent-rasterbar)
