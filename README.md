@@ -2,6 +2,8 @@
 
 BitTorrent client in C++ using libtorrent
 
+UPDATE: this is all stolen from example code on the libtorrent website and lightly modified
+
 I think I should probably do that final project, but I don't have that many ideas honestly. I enjoy programming and have
 programmed a cache-server for Eitan's Systems course. I've also taken OS with Eitan. And I enjoyed the mini-project
 because I think Python makes that kind of thing easy. Maybe I should make a BitTorrent client
